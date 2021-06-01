@@ -137,17 +137,17 @@ Reference: https://docs.microsoft.com/en-us/azure/aks/concepts-clusters-workload
 
 1. Configure cluster autoscaling for the node pool by running the following command (before running the command, confirm there is only one node in the cpupool node pool):
 
-```
-az aks nodepool update \
-  --resource-group $RG_NAME \
-  --cluster-name $AKS_NAME \
-  --name cpupool \
-  --enable-cluster-autoscaler \
-  --min-count 1 \
-  --max-count 5
-```
+    ```
+    az aks nodepool update \
+    --resource-group $RG_NAME \
+    --cluster-name $AKS_NAME \
+    --name cpupool \
+    --enable-cluster-autoscaler \
+    --min-count 1 \
+    --max-count 5
+    ```
 
-> Info: https://docs.microsoft.com/en-us/azure/aks/cluster-autoscaler#use-the-cluster-autoscaler-with-multiple-node-pools-enabled
+    > Reference: https://docs.microsoft.com/en-us/azure/aks/cluster-autoscaler#use-the-cluster-autoscaler-with-multiple-node-pools-enabled
 
 2. Run `kubectl delete deployment/azure-vote-front` and `kubectl delete deployment/azure-vote-back`.
 
@@ -176,11 +176,11 @@ az aks nodepool update \
 
 3. Run the following to create the PVC and an nginx pod that uses that PVC:
 
-```
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/master/deploy/example/pvc-azurefile-csi.yaml
+    ```
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/master/deploy/example/pvc-azurefile-csi.yaml
 
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/master/deploy/example/nginx-pod-azurefile.yaml
-```
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/master/deploy/example/nginx-pod-azurefile.yaml
+    ```
 
 4. View the volume in the portal and notice that the volume is mounted at `/mnt/azurefile`.
 
