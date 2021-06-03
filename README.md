@@ -1,5 +1,14 @@
 # AKS Concepts
 
+## Prerequisites
+
+- az cli (latest version: 2.24.x +): https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
+
+> Info: Issues when running `az aks create` when the az cli version is not updated. If you experience an issue similar to [the following](https://github.com/Azure/azure-cli-extensions/issues/3445), try [updating the az cli](https://docs.microsoft.com/en-us/cli/azure/update-azure-cli).
+
+- kubectl (version 1.19.x +): https://kubernetes.io/docs/tasks/tools/
+- docker (version 20.10.x +): https://docs.docker.com/engine/install/
+
 ## How is AKS Architected?
 
 Reference: https://docs.microsoft.com/en-us/azure/aks/concepts-clusters-workloads
