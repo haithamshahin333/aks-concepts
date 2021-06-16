@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-blob-two-pv
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-blob-two
+  mountOptions:
+    - nolock
+    - soft
+    - nfsvers=3
+  nfs:
+    path: /STORAGE_ACCOUNT_NAME/CONTAINER_NAME
+    server: STORAGE_ACCOUNT_SERVER
