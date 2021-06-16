@@ -1,0 +1,24 @@
+persistence:
+  enabled: true
+  storageClass: azurefile-csi-nfs
+  size: 100Gi
+  accessModes:
+    - ReadWriteMany
+
+volumePermissions:
+  enabled: true
+
+mariadb:
+  primary:
+    persistence:
+      enabled: false
+
+livenessProbe:
+  enabled: false
+
+readinessProbe:
+  enabled: false
+
+service:
+  type: LoadBalancer
+

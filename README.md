@@ -244,6 +244,40 @@ Reference: https://docs.microsoft.com/en-us/azure/aks/concepts-clusters-workload
     # Run a port-forward to view the front-end from your local machine (usefule when not deploying as a LoadBalancer service)
     kubectl port-forward svc/azure-vote-front 8000:80 -n acr-demo
     ```
+
+## Lab 7: NFS File Setup with Azure Files
+
+> Info: Assumes the Azure File CSI Driver is installed from lab 1
+
+Reference: https://github.com/kubernetes-sigs/azurefile-csi-driver/tree/master/deploy/example/nfs
+
+1. Run the following to Allow NFS File Shares under your subscription:
+
+    ```
+    az feature register --name AllowNfsFileShares --namespace Microsoft.Storage
+
+    # Run the command below to validate the feature is registered
+    # This may take up to 30 minutes
+    # You will see 'Microsoft.Storage/AllowNfsFileShares  Registered' once it is complete
+    az feature list -o table --query "[?contains(name, 'Microsoft.Storage/AllowNfsFileShares')].{Name:name,State:properties.state}"
+
+    az provider register --namespace Microsoft.Storage
+    ```
+
+2. Run the following to create a storage class that will dynamically provision an NFS File Share when called through a PVC:
+
+    ```
+    wget https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/master/deploy/example/storageclass-azurefile-nfs.yaml
+
+    kubectl create -f storageclass-azurefile-nfs.yaml
+    ```
+
+3. Run `kubectl create ns nfs-test`
+
+4. Run `helm install wordpress -f wordpress-values.yaml -n nfs-test bitnami/wordpress`
+
+5. Run `kubectl logs -f $(kubectl get pod -l app.kubernetes.io/instance=wordpress -o jsonpath='{.items[0].metadata.name}' -n nfs-test) -n nfs-test` to follow the logs of the container as it starts (takes about 10 minutes on a fresh install based on my testing).
+
 ## Lab 8: NFS over Blob in Azure
 
 Reference: https://docs.microsoft.com/en-us/azure/storage/blobs/network-file-system-protocol-support-how-to?tabs=azure-cli
