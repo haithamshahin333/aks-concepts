@@ -244,3 +244,67 @@ Reference: https://docs.microsoft.com/en-us/azure/aks/concepts-clusters-workload
     # Run a port-forward to view the front-end from your local machine (usefule when not deploying as a LoadBalancer service)
     kubectl port-forward svc/azure-vote-front 8000:80 -n acr-demo
     ```
+## Lab 8: NFS over Blob in Azure
+
+Reference: https://docs.microsoft.com/en-us/azure/storage/blobs/network-file-system-protocol-support-how-to?tabs=azure-cli
+
+1. Register the nfs v3 feature
+
+```bash
+az login
+
+# regiser the nfsv3 feature in the subscription
+az feature register --namespace Microsoft.Storage --name AllowNFSV3
+
+# verify that the feature is registered
+az feature show --namespace Microsoft.Storage --name AllowNFSV3
+
+# once registered, run this command to register the resource provider
+az provider register -n Microsoft.Storage
+```
+
+2. Create a Storage Account Properly Configured for NFS
+
+> Info: Before creating the storage account, you must have registered the feature as shown above.
+
+Run through [step 5](https://docs.microsoft.com/en-us/azure/storage/blobs/network-file-system-protocol-support-how-to?tabs=azure-cli#step-5-create-and-configure-a-storage-account) of this tutorial in the Azure Portal - be sure to properly configure the Storage Account so that the NFS setting can be enabled.
+
+> Info: Notice the hierarchical namespace setting as well as the networking setting. You can either use a private endpoint or just select public endpoints (selected networks) and accept the VNet where AKS is deployed. This will secure the storage account to only allow connections from the AKS VNet.
+
+3. Create a container in the storage account for the blob
+
+Follow [step 6](https://docs.microsoft.com/en-us/azure/storage/blobs/network-file-system-protocol-support-how-to?tabs=azure-cli#step-6-create-a-container) - there is no special rule for how the container is created to support the backing blob storage.
+
+4. In your cluster, run through the following steps:
+
+> Info: Review the comments before running the commands to properly update the templates to work for your NFS storage account
+
+```bash
+kubectl create ns nfs-blob-sample
+
+# Open nfs-blob-templates/nfs-blob-pv.yaml and update the path and server settings to configure the NFS Volume
+kubectl apply -f nfs-blob-templates/nfs-blob-pv.yaml -n nfs-blob-sample
+kubectl apply -f nfs-blob-templates/nfs-blob-pvc.yaml -n nfs-blob-sample
+kubectl apply -f nfs-busybox-pod.yaml -n nfs-blob-sample
+
+# Once the busybox pod is up and running, exec into the pod and view the "/mnt" folder
+# Create a file in the folder
+kubectl exec -it pod/busybox-sleep sh -n nfs-blob-sample
+cd /mnt
+echo "hello world" > hello-world.txt
+
+###
+# Run through the same steps for another busybox pod so we can see how multiple pods can talk to the same NFS backed blob
+###
+
+# Open nfs-blob-templates/nfs-blob-pv-two.yaml and update the path and server settings to configure the NFS Volume
+kubectl apply -f nfs-blob-templates/nfs-blob-pv-two.yaml -n nfs-blob-sample
+kubectl apply -f nfs-blob-templates/nfs-blob-pvc-two.yaml -n nfs-blob-sample
+kubectl apply -f nfs-busybox-pod-two.yaml -n nfs-blob-sample
+
+# Once the busybox pod is up and running, exec into the pod and view the "/mnt" folder
+# View the previously created file
+kubectl exec -it pod/busybox-sleep sh -n nfs-blob-sample
+cd /mnt
+cat hello-world.txt
+```
