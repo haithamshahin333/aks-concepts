@@ -342,3 +342,70 @@ Reference: https://docs.microsoft.com/en-us/azure/storage/blobs/network-file-sys
     cd /mnt
     cat hello-world.txt
     ```
+
+## Lab 9: Ingress Controllers
+
+There are a few options when it comes to [ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) with AKS. We will look at the [nginx ingress controller](https://docs.microsoft.com/en-us/azure/aks/ingress-basic) and [application gateway ingress controller](https://docs.microsoft.com/en-us/azure/application-gateway/ingress-controller-overview).
+
+### Nginx Ingress Controller
+
+1. Run `kubectl create namespace ingress-basic`
+
+2. Add the helm repo for ingress-nginx: `helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx`
+
+3. Run the following helm install to deploy the ingress controller:
+
+    > Info: Here is the [repo](https://github.com/kubernetes/ingress-nginx/tree/master/charts/ingress-nginx) to further configure the ingress controller deployment.
+
+    > Info: On the Azure side, you will find a Public IP is provisioned on the Load Balancer associated with your cluster. This will be the front-end IP that fronts the nginx ingress controller.
+
+    ```
+    helm install nginx-ingress ingress-nginx/ingress-nginx \
+        --namespace ingress-basic \
+        --set controller.replicaCount=2 \
+        --set controller.nodeSelector."beta\.kubernetes\.io/os"=linux \
+        --set defaultBackend.nodeSelector."beta\.kubernetes\.io/os"=linux \
+        --set controller.admissionWebhooks.patch.nodeSelector."beta\.kubernetes\.io/os"=linux
+    ```
+
+4. To test the ingress controller, run the following:
+
+```
+# Deploy the resources
+kubectl create ns test-nginx-app
+kubectl apply -f aks-helloworld.yaml -n test-nginx-app
+
+# Test the ingress
+# Navigate to the address shown here
+kubectl get ingress -n test-nginx-app
+```
+
+### Application Gateway Ingress Controller (AGIC)
+
+In this lab, we will leverage the AKS add-on feature to deploy our app gateway ingress controller. Another deployment method is through [helm](https://docs.microsoft.com/en-us/azure/application-gateway/ingress-controller-overview#difference-between-helm-deployment-and-aks-add-on).
+
+Here are some of the [Benefits of App Gateway Ingress Controller](https://docs.microsoft.com/en-us/azure/application-gateway/ingress-controller-overview#benefits-of-application-gateway-ingress-controller).
+
+With AGIC you can deploy it as an add-on at cluster creation time or add it to an existing AKS cluster. Additionally, you can either have the add-on provision an App Gateway instance or use an existing App Gateway instance.
+
+1. Run `az aks enable-addons --name <AKS-NAME> --resource-group <RESOURCE-GROUP> -a ingress-appgw --appgw-name myApplicationGateway --appgw-subnet-cidr "10.2.0.0/24"`
+
+> Info: App Gateway requires a dedicated subnet. The command above will provision that subnet within the same default VNet used with AKS, but you may need to modify this depending on your AKS deployment. This [reference](https://docs.microsoft.com/en-us/azure/application-gateway/configuration-infrastructure#virtual-network-and-dedicated-subnet) further describes the infrastructure/networking configuration for App Gateway.
+
+> Validation: If you look into the `MC_` resource group that holds the infrastructure associated with the AKS cluster, you should now see an App Gateway resource provisioned.
+
+> Validation: If you view the App Gateway resource provisioned for the cluster, you should see an 'Updating' status. The App Gateway will take some time to get configured and setup for use.
+
+2. Run the following:
+
+```
+# Deploy the resources
+# If you review the aks-helloworld-appgateway.yaml file, you'll see that changes were made on annotations to specify app gateway:
+# kubernetes.io/ingress.class: azure/application-gateway
+kubectl create ns test-appgateway-app
+kubectl apply -f aks-helloworld-appgateway.yaml -n test-appgateway-app
+
+# Test the ingress
+# Navigate to the address shown here
+kubectl get ingress -n test-appgateway-app
+```
