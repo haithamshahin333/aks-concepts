@@ -409,3 +409,40 @@ kubectl apply -f aks-helloworld-appgateway.yaml -n test-appgateway-app
 # Navigate to the address shown here
 kubectl get ingress -n test-appgateway-app
 ```
+
+## Lab 10: Azure Blob Storage CSI Driver
+
+### Important References
+- https://github.com/Azure/azure-storage-fuse
+- https://github.com/kubernetes-sigs/blob-csi-driver
+
+1. Install CSI Driver with Helm
+
+    > Important: Be sure to follow the [prerequisites](https://github.com/kubernetes-sigs/blob-csi-driver/blob/master/docs/install-driver-on-aks.md#set-up-csi-driver-on-aks-cluster) here for this to work
+
+    ```
+    helm repo add blob-csi-driver https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/charts
+    helm install blob-csi-driver blob-csi-driver/blob-csi-driver --namespace kube-system
+    ```
+
+2. Setup the following storage class
+
+    > You can also provision a storage account manually as described [here](https://github.com/kubernetes-sigs/blob-csi-driver/blob/master/deploy/example/e2e_usage.md#option2-bring-your-own-storage-account)
+
+    ```
+    kubectl apply -f blob-storage-class.yaml
+    ```
+
+3. Create an application that uses the storage class. Here is an example statefulset that mounts a volume:
+
+    ```
+    kubectl create -f https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/deploy/example/statefulset.yaml
+    ```
+
+    > You can validate it worked by going into the Azure Portal and viewing the storage account. You should see a file being updated regularly.
+
+    > To see the mount in the contianer
+
+    ```
+    kubectl exec -it statefulset-blob-0 -- df -h
+    ```
